@@ -1,0 +1,1168 @@
+---
+title: "Os Impactos da Política Monetária na Taxa de Câmbio no Brasil"
+author: "Ari Araújo & Luiz Araújo"
+date: "10/07/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+# DIFERENÇA DAS VARIÁVIES
+
+1.VARIAÇÃO DI
+
+```{r echo =F, warning=FALSE, include=F}
+#pacotes utilizados
+library(xlsx)
+library(readxl)
+library(sandwich)
+library(AER)
+library(ivpack)
+library(gmm)
+library(dplyr)
+library(ggplot2)
+```
+
+
+
+Colentando os dados onde **NÃO** houve reuniões do copom
+
+```{r warning=F}
+##DI SEM  COPOM TERCA
+dados.sem.copom.t <- read_excel("C:/Users/rprog/Desktop/Dados.xlsx", 
+                         sheet = "sem copom terca")  #aba onde esta os dados de terca s copom
+  
+##DI SEM  COPOM QUINTA
+dados.sem.copom.q <- read_excel("C:/Users/rprog/Desktop/Dados.xlsx", 
+                             sheet = "sem copom quinta")  #aba onsde estao os dados sem copom na quinta
+```
+ 
+ 
+Colentando os dados onde **HOUVE** reuniões do copom
+ 
+```{r}
+ dados.com.copom.t <- read_excel("C:/Users/rprog/Desktop/Dados.xlsx", 
+                          sheet = "com copom terca") 
+
+ dados.com.copom.q <- read_excel("C:/Users/rprog/Desktop/Dados.xlsx", 
+                            sheet = "com copom quinta") 
+```
+ 
+ 
+ 
+ 
+Variação entre as observações de quinta e terça, onde **NÃO** houve reuniões do copom
+
+```{r}
+di.sem.copom.t <- dados.sem.copom.t$`DI-terca` #DI SEM COPOM TERCA
+
+di.sem.copom.q  <- dados.sem.copom.q$`DI-quinta` #DI SEM COPOM QUINTA
+  
+var.di.sem.copom <- log(1+di.sem.copom.q )-log(1+di.sem.copom.t)
+```
+ 
+ 
+
+
+ 
+Variação entre as observações de quinta e terça, onde **HOUVE** reuniões do copom 
+
+$$
+\Delta i_c=log(1+i_{quinta(c)})-log(1+i_{terça(c)})
+$$
+
+```{r}
+ di.com.copom.t <- dados.com.copom.t$`DI-terca`
+ di.com.copom.q <- dados.com.copom.q$`DI-quinta`
+ 
+ var.di.com.copom <- log(1+di.com.copom.q)-log(1+di.com.copom.t)
+```
+
+
+2. VARIAÇÃO CÂMBIO
+
+$$
+\Delta e_c=log(e_{quinta(c)})-log(e_{terça(c)})
+$$
+Variação entre as observações de quinta e terça, onde **NÃO** houve reuniões do copom 
+
+```{r}
+ cambio.sem.copom.t <- dados.sem.copom.t$`Dólar-terca`
+ cambio.sem.copom.q <- dados.sem.copom.q$`Dólar-quinta`
+ 
+ var.cambio.sem.copom <- log(cambio.sem.copom.q)-log(cambio.sem.copom.t)
+```
+
+$$
+\Delta e_{sc}=log(e_{quinta(sc)})-log(e_{terça(sc)})
+$$
+
+Variação entre as observações de quinta e terça, onde **HOUVE** reuniões do copom  
+
+```{r}
+ cambio.com.copom.t <- dados.com.copom.t$`Dólar-terca`
+ cambio.com.copom.q <- dados.com.copom.q$`Dólar-quinta`
+ 
+ var.cambio.com.copom <- log(cambio.com.copom.q)-log(cambio.com.copom.t)
+```
+ 
+
+3. VARIAÇÃO SELIC
+
+
+$$
+\Delta selic_c=log(1+selic_{quinta(c)})-log(1+selic_{terça(c)})
+$$
+
+Variação entre as observações de quinta e terça, onde **NÃO** houve reuniões do copom 
+
+```{r}
+ selic.sem.copom.t <- dados.sem.copom.t$`Selic-terca`
+ selic.sem.copom.q <- dados.sem.copom.q$`Selic-quinta`
+ 
+ var.selic.sem.copom<- log(1+selic.sem.copom.q)-log(1+selic.sem.copom.t)
+```
+
+
+
+$$
+\Delta selic_{sc}=log(1+selic_{quinta(sc)})-log(1+selic_{terça(sc)})
+$$
+
+Variação entre as observações de quinta e terça, onde **HOUVE** reuniões do copom  
+
+```{r}
+ selic.com.copom.t <- dados.com.copom.t$`Selic-terca`
+ selic.com.copom.q <- dados.com.copom.q$`Selic-quinta`
+ 
+ var.selic.com.copom<- log(1+selic.com.copom.q)-log(1+selic.com.copom.t)
+```
+
+
+4. VARIAÇÃO EMBI
+
+$$
+\Delta embi_c=log(embi_{quinta(c)})-log(embi_{terça(c)})
+$$
+
+Variação entre as observações de quinta e terça, onde **NÃO** houve reuniões do copom 
+
+```{r}
+ embi.sem.copom.t <- dados.sem.copom.t$`Embi Br terca`
+ embi.sem.copom.q <- dados.sem.copom.q$`Embi br quinta`
+ 
+ var.embi.sem.copom.q <- log(embi.sem.copom.q)-log(embi.sem.copom.t)
+```
+
+
+
+$$
+\Delta embi_{sc}=log(embi_{quinta(sc)})-log(embi_{terça(sc)})
+$$
+
+Variação entre as observações de quinta e terça, onde **HOUVE** reuniões do copom 
+```{r}
+ embi.com.copom.t <- dados.com.copom.t$`embi-terca`
+ embi.com.copom.q <- dados.com.copom.q$`embi- quinta`
+ 
+ var.embi.com.copom.q <- log(embi.com.copom.q)-log(embi.com.copom.t)
+```
+
+
+
+5. VARIAÇÃO DXY
+
+$$
+\Delta dxy_c=log(dxy_{quinta(c)})-log(dxy_{terça(c)})
+$$
+
+Variação entre as observações de quinta e terça, onde **NÃO** houve reuniões do copom 
+
+```{r}
+ dxy.sem.copom.t <- dados.sem.copom.t$dxy
+ dxy.sem.copom.q <- dados.sem.copom.q$dxy
+ 
+ var.dxy.sem.copom.q <- log(dxy.sem.copom.q)-log(dxy.sem.copom.t)
+```
+
+
+$$
+\Delta dxy_{sc}=log(dxy_{quinta(sc)})-log(dxy_{terça(sc)})
+$$
+
+Variação entre as observações de quinta e terça, onde **HOUVE** reuniões do copom 
+
+```{r}
+ dxy.com.copom.t <- dados.com.copom.t$dxy
+ dxy.com.copom.q <- dados.com.copom.q$dxy
+ 
+ var.dxy.com.copom.q <- log(dxy.com.copom.q)-log(dxy.com.copom.t)
+```
+
+
+6. VARIAÇÃO VIX
+
+$$
+\Delta vix_c=log(vix_{quinta(c)})-log(vix_{terça(c)})
+$$
+
+Variação entre as observações de quinta e terça, onde **NÃO** houve reuniões do copom 
+
+```{r}
+ vix.sem.copom.t <- dados.sem.copom.t$vix
+ vix.sem.copom.q <- dados.sem.copom.q$vix
+ 
+ var.vix.sem.copom.q <- log(vix.sem.copom.q)-log(vix.sem.copom.t)
+```
+
+
+
+$$
+\Delta vix_{sc}=log(vix_{quinta(sc)})-log(vix_{terça(sc)})
+$$
+
+Variação entre as observações de quinta e terça, onde **HOUVE** reuniões do copom 
+
+```{r}
+ vix.com.copom.t <- dados.com.copom.t$vix
+ vix.com.copom.q <- dados.com.copom.q$vix
+ 
+ var.vix.com.copom.q <- log(vix.com.copom.q)-log(vix.com.copom.t)
+```
+
+################################################################################################################################################
+
+# CRIANDO VARIÁVEIS E INSTRUMENTOS
+
+## 1. Criando Variáveis
+
+
+### 1.1  $\Delta I$
+
+Para criar a variável $\Delta I$ é feita a união dos dois conjuntos, como apresentado por Rigobon e Sack (2004)
+
+$$
+\Delta i= \{ \Delta_{it},t \in C \} \cup \{ \Delta_{it},t \in SC  \}, \; C =Copom,\;  sc= Sem Copom
+$$
+
+Como o tamanho das amostras em dias de copom e dias sem são diferentes, devemos fazer o controle pelo tamnho das amostras.
+
+
+$$
+\Delta I= \{ \frac{\Delta_{it}}{\sqrt {Tc} },t \in F \} \cup \{ \frac{\Delta_{it}}{\sqrt {Tsc} },t \in F^*  \}
+$$
+
+Dividindo pelo número de observações
+
+```{r}
+length(var.di.com.copom)
+var.di.com.copom.pad <- var.di.com.copom/(sqrt(73))
+
+length(var.di.sem.copom)
+var.di.sem.copom.pad <-var.di.sem.copom/(sqrt(389)) 
+```
+
+
+Adicionando data nas observações para futuramente ordenar os dados
+
+```{r}
+datas.com.copom <- as.Date(dados.com.copom.t$`Data-terca`)
+var.di.com.copom.d <- data.frame(datas.com.copom,round(var.di.com.copom.pad,6))
+colnames(var.di.com.copom.d) <- c("Datas","Var DI")
+
+
+datas.sem.copom <- as.Date(dados.sem.copom.t$`Data- terça`)
+var.di.sem.copom.d <- data.frame(datas.sem.copom,round(var.di.sem.copom.pad,6))
+colnames(var.di.sem.copom.d) <- c("Datas","Var DI")
+
+```
+
+Unindos as observações em dias de copom com as observações em dias sem copom
+
+```{r}
+var.di <- rbind.data.frame(var.di.com.copom.d,var.di.sem.copom.d)
+
+```
+
+
+Ordenando as datas
+
+```{r}
+
+var.di.f <-  var.di[order(var.di$Datas,decreasing = F),]
+
+```
+
+###  1.2  $\Delta E$
+  
+  
+A criação do $\Delta E$  é semlhante a criação do  $\Delta I$.
+
+$$
+\Delta e= \{ \Delta_{et},t \in C \} \cup \{ \Delta_{et},t \in SC  \},\; C =Copom,\; sc= Sem Copom
+$$
+
+Fazendo o controle pelo tamanho das amostras.
+
+$$
+\Delta E= \{ \frac{\Delta_{et}}{\sqrt {Tc} },t \in F \} \cup \{ \frac{\Delta_{et}}{\sqrt {Tsc} },t \in F^*  \}
+$$
+
+Onde $T_C$ e $T_N$ são os tamanhos das amostras.
+
+
+### *No R*
+
+Dividindo pelo número de observações
+
+```{r}
+length(var.cambio.com.copom)
+var.cambio.com.copom.pad <- var.cambio.com.copom/(sqrt(73))
+head(var.cambio.com.copom.pad,4)
+
+
+length(var.cambio.sem.copom)
+var.cambio.sem.copom.pad <-var.cambio.sem.copom/(sqrt(389)) 
+head(var.cambio.sem.copom.pad,4)
+
+```
+
+
+Adicionando data nas observações
+
+```{r}
+#Datas já foram criadas
+var.cambio.com.copom.d <- data.frame(datas.com.copom,round(var.cambio.com.copom.pad,6))
+colnames(var.cambio.com.copom.d) <- c("Datas","Var Cambial")
+
+head(var.cambio.com.copom.d,20)
+
+
+var.cambio.sem.copom.d <- data.frame(datas.sem.copom,round(var.cambio.sem.copom.pad,6))
+colnames(var.cambio.sem.copom.d) <- c("Datas","Var Cambial")
+
+head(var.cambio.sem.copom.d,20)
+```
+
+Unindos as observações em dias de copom com as observações em dias sem copom
+
+```{r}
+var.cambio <- rbind.data.frame(var.cambio.com.copom.d,var.cambio.sem.copom.d)
+
+```
+
+
+Ordenando as datas
+
+```{r}
+
+var.cambio.f <-  var.cambio[order(var.cambio$Datas,decreasing = F),]
+
+
+```
+
+
+
+## 2. Criando Instrumentos
+
+###  2.1 $\omega_i$
+  
+  
+Os instrumentos equivalem a união de dois conjuntos. 
+  
+$$
+\Delta w_i= \{ \Delta_{it},t \in C \} \cup \{- \Delta_{it},t \in SC  \},\; C =Copom,\; sc= Sem Copom
+$$
+
+Também devem ser controlados pelo tamanho da amostra.
+
+$$
+\Delta w_i= \{ \frac{\Delta_{it}}{\sqrt {Tc} },t \in F \} \cup \{- \frac{\Delta_{it}}{\sqrt {Tsc} },t \in F^*  \}
+$$
+  
+#### *No R*  
+  
+  
+Alterando o sinal das observações
+
+```{r}
+#O DATA FRAME COM COPOM NÃO SERÁ AFETADO
+
+#TROCANDO O SINAL
+var.di.sem.copom.pad.sinal <- -var.di.sem.copom.pad
+
+
+var.di.sem.copom.d.sinal <- data.frame(datas.sem.copom,round(var.di.sem.copom.pad.sinal,6))
+colnames(var.di.sem.copom.d.sinal) <- c("Datas","Var DI")
+
+head(var.di.sem.copom.d.sinal,4)
+```  
+  
+  
+  
+Unindos as observações 
+
+```{r}
+var.di.sinal <- rbind.data.frame(var.di.com.copom.d,var.di.sem.copom.d.sinal)
+
+```  
+  
+Ordenando as datas
+
+```{r}
+
+var.di.sinal.f <-  var.di.sinal[order(var.di.sinal$Datas,decreasing = F),]
+
+
+```  
+  
+  
+###  2.2 $\omega_e$
+
+
+O segundo instrumento é criado de maneira semelhante ao primeiro
+  
+$$
+\Delta w_e= \{ \Delta_{et},t \in C \} \cup \{- \Delta_{et},t \in SC  \}, C =Copom, sc= Sem Copom
+$$
+
+Controlando pelo tamanho da amostra.
+
+$$
+\Delta w_e= \{ \frac{\Delta_{et}}{\sqrt {Tc} },t \in F \} \cup \{- \frac{\Delta_{et}}{\sqrt {Tsc} },t \in F^*  \}
+$$
+  
+  
+#### *No R*  
+  
+Alterando o sinal das observações
+
+```{r}
+#O DATA FRAME COM COPOM NÃO SERÁ AFETADO
+
+#TROCANDO O SINAL
+var.cambio.sem.copom.pad.sinal <- -var.cambio.sem.copom.pad
+
+
+var.cambio.sem.copom.d.sinal <-       data.frame(datas.sem.copom,round(var.cambio.sem.copom.pad.sinal,6))
+
+colnames(var.cambio.sem.copom.d.sinal) <- c("Datas","Var Cambial")
+
+
+```  
+  
+  
+  
+Unindos as observações 
+
+```{r}
+var.cambio.sinal <- rbind.data.frame(var.cambio.com.copom.d,var.cambio.sem.copom.d.sinal)
+
+```  
+  
+Ordenando as datas
+
+```{r}
+
+var.cambio.sinal.f <-  var.cambio.sinal[order(var.cambio.sinal$Datas,decreasing = F),]
+
+
+```  
+
+
+
+
+## 3. Variáveis Adicionais
+
+###  3.1 VIX
+
+```{r}
+# VIX sem copom
+var.vix.sem.copom.d <- data.frame(datas.sem.copom,round(var.vix.sem.copom.q,6))
+head(var.vix.sem.copom.d)
+colnames(var.vix.sem.copom.d) <- c("Datas","VIX")
+#VIX com copom
+var.vix.com.copom.d <- data.frame(datas.com.copom,round(var.vix.com.copom.q,6))
+head(var.vix.com.copom.d)
+colnames(var.vix.com.copom.d) <- c("Datas","VIX")
+```
+  
+  
+Unindos as observações 
+
+```{r}
+var.vix <- rbind.data.frame(var.vix.com.copom.d,var.vix.sem.copom.d)
+```  
+  
+Ordenando as datas
+
+```{r}
+var.vix.f <-  var.vix[order(var.vix$Datas,decreasing = F),]
+
+```  
+  
+  
+###  3.2 EMBI
+
+```{r}
+# EMBI sem copom
+var.embi.sem.copom.d <- data.frame(datas.sem.copom,round(var.embi.sem.copom.q,6))
+head(var.embi.sem.copom.d)
+colnames(var.embi.sem.copom.d) <- c("Datas","EMBI")
+#EMBI com copom
+var.embi.com.copom.d <- data.frame(datas.com.copom,round(var.embi.com.copom.q,6))
+head(var.embi.com.copom.d)
+colnames(var.embi.com.copom.d) <- c("Datas","EMBI")
+```
+  
+  
+Unindos as observações 
+
+```{r}
+var.embi <- rbind.data.frame(var.embi.com.copom.d,var.embi.sem.copom.d)
+```  
+  
+Ordenando as datas
+
+```{r}
+var.embi.f <-  var.embi[order(var.embi$Datas,decreasing = F),]
+head(var.embi.f,4)
+```  
+ 
+ 
+### 3.3 DXY
+
+```{r}
+# DXY sem copom
+var.dxy.sem.copom.d <- data.frame(datas.sem.copom,round(var.dxy.sem.copom.q,6))
+head(var.dxy.sem.copom.d)
+colnames(var.dxy.sem.copom.d) <- c("Datas","DXY")
+# DXY com copom
+var.dxy.com.copom.d <- data.frame(datas.com.copom,round(var.dxy.com.copom.q,6))
+head(var.dxy.com.copom.d)
+colnames(var.dxy.com.copom.d) <- c("Datas","DXY")
+```
+  
+  
+Unindos as observações 
+
+```{r}
+var.dxy <- rbind.data.frame(var.dxy.com.copom.d,var.dxy.sem.copom.d)
+```  
+  
+Ordenando as datas
+
+```{r }
+var.dxy.f <-  var.dxy[order(var.dxy$Datas,decreasing = F),]
+head(var.dxy.f,4)
+```  
+
+
+
+###################################################################################################################################################
+
+
+### CRIANDO DUMMIES 
+
+
+Variáveis na quinta SEM COPOM
+
+```{r}
+
+a.vista.sem.copom.q <- dados.sem.copom.q$`a vista-quinta`
+a.termo.sem.copom.q <- dados.sem.copom.q$`a termo-quinta`
+emp.sem.copom.q <- dados.sem.copom.q$`emprestimo em moeda estran-quinta`
+recompra.sem.copom.q <- dados.sem.copom.q$`recompra-quinta`
+data.sem.cop.q <- dados.sem.copom.q$`Data-quinta`
+## df de todas as intervecoes sem copom
+df.I.SC <-data.frame(data.sem.cop.q,a.vista.sem.copom.q,a.termo.sem.copom.q,emp.sem.copom.q,recompra.sem.copom.q) 
+
+
+df.I.SC <- transform(df.I.SC, Soma=rowSums(df.I.SC[,2:5])) ## somando todas as intervencoes
+colnames(df.I.SC) <- c("Data","A Vista","A Termo","Emprestimo","Recompra","Total_Interv")
+head(df.I.SC,4)
+```
+
+Criando as dummies pos e neg para dias sem copom
+
+```{r}
+
+df.I.SC$dummy.int.pos <- ifelse(df.I.SC$Total_Interv>0,1,0)
+df.I.SC$dummy.int.neg <- ifelse(df.I.SC$Total_Interv<0,1,0)
+colnames(df.I.SC) <- c("Data","A Vista","A Termo","Emprestimo","Recompra","Total_Interv","Dummy_POS","Dummy_Neg")
+
+```
+
+
+```{r}
+#  juntando em um df e renomeando
+
+df.I.SC.pos<- data.frame(df.I.SC$Data,df.I.SC$Dummy_POS)
+df.I.SC.neg <- data.frame(df.I.SC$Data,df.I.SC$Dummy_Neg)
+colnames(df.I.SC.pos) <- c("Data","Dummy_POS")
+colnames(df.I.SC.neg) <- c("Data","Dummy_NEG")
+```
+
+
+Variáveis na quinta COM COPOM
+
+```{r}
+#variaveis de intervencao
+a.vista.com.copom.q <- dados.com.copom.q$`a vista-quinta`
+a.termo.com.copom.q <- dados.com.copom.q$`a termo-quinta`
+emp.com.copom.q <- dados.com.copom.q$`emprestimo em moeda estran-quinta`
+recompra.com.copom.q <- dados.com.copom.q$`recompra-quinta`
+data.com.cop.q <- dados.com.copom.q$`Data-quinta`
+```
+
+
+
+
+```{r}
+#df intervencao com copom
+
+df.I.CC <-data.frame(data.com.cop.q,a.vista.com.copom.q,a.termo.com.copom.q,emp.com.copom.q,recompra.com.copom.q) 
+colnames(df.I.CC) <- c("Data","A Vista","A Termo","Emprestimo","Recompra")
+
+df.I.CC<- transform(df.I.CC, Soma=rowSums(df.I.CC[,2:5]))## somando todas as intervencoes
+colnames(df.I.CC) <- c("Data","A Vista","A Termo","Emprestimo","Recompra","Total_Interv")
+```
+
+
+Criando as dummies para os dias com reuniões do Copom
+
+```{r}
+
+df.I.CC$dummy.int.pos <- ifelse(df.I.CC$Total_Interv>0,1,0)
+df.I.CC$dummy.int.neg <- ifelse(df.I.CC$Total_Interv<0,1,0)
+colnames(df.I.CC) <-c("Data","A Vista","A Termo","Emprestimo","Recompra","Total_Interv","Dummy_POS","Dummy_Neg")
+
+df.I.CC.pos<- data.frame(df.I.CC$Data,df.I.CC$Dummy_POS)
+df.I.CC.neg <- data.frame(df.I.CC$Data,df.I.CC$Dummy_Neg)
+colnames(df.I.CC.pos) <- c("Data","Dummy_POS")
+colnames(df.I.CC.neg) <- c("Data","Dummy_NEG")
+```
+
+
+
+
+
+Tabela final com a dummy de intervenção negativa
+
+```{r}
+dta <- c(as.Date(df.I.CC$Data),as.Date(df.I.SC$Data))
+
+
+df.dummies.pos <- rbind.data.frame(df.I.CC.pos, df.I.SC.pos)
+```
+
+
+
+Colocando as datas em ordem crescente
+
+```{r}
+df.dummies.pos.f <- df.dummies.pos[order(df.dummies.pos$Data,decreasing = FALSE),]
+
+```
+
+
+Tabela final com a dummy de intervenção negativa
+
+```{r}
+df.dummies.neg <- rbind.data.frame(df.I.CC.neg, df.I.SC.neg)
+```
+
+
+Colocando as datas em ordem crescente
+
+
+```{r}
+df.dummies.neg.f <- df.dummies.neg[order(df.dummies.neg$Data,decreasing = FALSE),]
+```
+
+
+
+###################################################################################################################################################
+
+
+
+# Estimação
+
+
+
+Criando matriz com as variáveis que serão utilizadas.
+
+```{r}
+#VAriáveis criadas
+WI <- var.di.sinal.f$`Var DI` # primeiro instrumento criado
+WE <- var.cambio.sinal.f$`Var Cambial` # segundo instrumento criado
+
+DELTA_I <- var.di.f$`Var DI`# Variavel explicativa (endogena) criada
+DELTA_E <- var.cambio.f$`Var Cambial` # Variael explicada criada
+
+#variáveis adicionais
+VIX <- var.vix.f$VIX # indice de volatilidade do mercado
+EMBI <- var.embi.f$EMBI # risco pais
+DXY <- var.dxy.f$DXY # indice do dolar
+
+
+#Dummies   
+
+  #NEgativa
+INT.BC.NEG <- df.dummies.neg.f$Dummy_NEG 
+
+  #Positiva
+
+INT.BC.POS <- df.dummies.pos.f$Dummy_POS
+
+# todas as variaveis
+dados <- data.frame(DELTA_E,DELTA_I,WE,WI,VIX,EMBI,DXY,INT.BC.NEG,INT.BC.POS)
+```
+
+
+Estatísticas das variáveis.
+
+```{r}
+summary(dados)
+```
+
+
+
+Correlação entre as variávies
+
+```{r}
+cor(dados)
+```
+
+
+
+## Estimação por MQO
+
+
+
+```{r}
+mqo <- lm(DELTA_E~DELTA_I)
+summary(mqo)
+coef3 <- round((coefficients(mqo)),4)
+coef3
+```
+
+
+
+
+## Estimação por MQ2E. 
+
+### Estimação utilizando apenas $\Delta I$ como variável
+
+Estimação com $\omega_i$ como instrumento.
+
+```{r}
+#Apenas WI como instrumento
+iv1 <- ivreg(formula =DELTA_E~ DELTA_I |WI,data = dados )
+summary(iv1,diagnostics = T)
+coef1 <- round((coefficients(iv1)),6)
+print(coef1)
+```
+
+
+Estimação com $\omega_i$ e $\omega_e$ como instrumentos.
+
+
+```{r}
+#WI e WE como instrumentos
+iv2 <- ivreg(formula = DELTA_E~DELTA_I |WI+WE,data = dados )
+summary(iv2,diagnostics = T)
+coef2 <- round((coefficients(iv2)),6)
+print(coef2)
+```
+
+
+### Estimação utilizando todas as variáveis criadas
+
+
+Estimação com $\omega_i$ como instrumento.
+
+
+```{r}
+#Documentação do ivreg:For example, if there is one exogenous regressor 'ex' and one endogenous regressor 'en' with instrument 'in', the appropriate formula would be y ~ ex + en | ex + in. Equivalently, this can be specified as y ~ ex + en | . - en + in .
+
+
+#Apenas WI como instrumento
+iv3 <- ivreg(formula = DELTA_E~DELTA_I + EMBI + DXY + VIX + INT.BC.NEG + INT.BC.POS |. -DELTA_I + WI,data = dados )
+summary(iv3,diagnostics=TRUE)
+coef3 <- round((coefficients(iv3)),4)
+print(coef3)
+```
+
+
+
+Estimação com $\omega_i$ e $\omega_e$ como instrumentos.
+
+```{r}
+#WI e WE como instrumentos
+iv4 <- ivreg(formula = DELTA_E~DELTA_I + EMBI + DXY + VIX + INT.BC.NEG + INT.BC.POS |. -DELTA_I + WE+ WI ,data = dados )
+summary(iv4 ,diagnostics=TRUE)
+coef4 <- round((coefficients(iv4)),4)
+print(coef4)
+```
+
+
+
+
+## Estimação por GMM
+
+
+### Estimação utilizando apenas $\Delta I$ como variável
+
+Estimação com $\omega_i$ como instrumento.
+
+```{r}
+#WI como instrumento
+reg_gmm1 <- gmm(DELTA_E~DELTA_I,~ WI,data = dados)
+summary(reg_gmm1)
+coefgmm1 <- round(reg_gmm1$coefficients,6)
+sum_gmm1 <- round(coef(summary(reg_gmm1)),6)
+
+print(sum_gmm1)
+
+```
+
+
+Estimação com $\omega_i$ e $\omega_e$ como instrumentos.
+
+
+```{r}
+#WI e WE como instrumento
+reg_gmm2 <- gmm(DELTA_E~DELTA_I , ~WI+WE,data = dados)
+summary(reg_gmm2)
+coefgmm2 <- round(reg_gmm2$coefficients,6)
+sum_gmm2 <- round(coef(summary(reg_gmm2)),6)
+
+print(sum_gmm2)
+```
+
+
+
+
+### Estimação utilizando todas as variáveis criadas
+
+
+Estimação com $\omega_i$ como instrumento.
+
+
+```{r}
+#WI como instrumento
+reg_gmm3 <- gmm(DELTA_E~ DELTA_I + EMBI+ VIX + DXY+ INT.BC.NEG + INT.BC.POS, 
+                ~ WI+ EMBI + VIX + DXY+ INT.BC.NEG + INT.BC.POS,data = dados)
+summary(reg_gmm3)
+
+coefgmm3 <- round(reg_gmm3$coefficients,6)
+sum_gmm3 <- round(coef(summary(reg_gmm3)),6)
+
+print(sum_gmm3)
+```
+
+
+
+
+Estimação com $\omega_i$ e $\omega_e$ como instrumentos.
+
+
+```{r}
+#WI e WE como instrumento
+reg_gmm4 <- gmm(DELTA_E~DELTA_I +EMBI + DXY + VIX + INT.BC.NEG  +  INT.BC.POS,
+                ~EMBI + DXY + VIX +  INT.BC.NEG  +  INT.BC.POS  + WI+WE, data = dados)
+summary(reg_gmm4)
+
+coefgmm4 <- round(reg_gmm4$coefficients,6)
+
+sum_gmm4 <- round(coef(summary(reg_gmm4)),6)
+
+print(sum_gmm4)
+```
+
+
+
+Breusch-Godfrey: H0: ausência de correlação serial
+
+```{r}
+
+bgtest(mqo,order=12)
+bgtest(iv1,12)
+bgtest(iv2,12)
+bgtest(iv3,order=12)
+bgtest(iv4,order=12)
+```
+
+
+##################################################################################################################################################
+
+# GRÁFICOS
+
+
+
+
+```{r}
+dados.s.c.t <- dados.sem.copom.t %>% 
+  select(`Data- terça`,`Dólar-terca`,`DI-terca`,`Embi Br terca`,vix,dxy)
+colnames(dados.s.c.t) <- c('Data','Dolar','DI','EMBI','VIX','DXY')
+
+
+dados.s.c.q <- dados.sem.copom.q %>% 
+  select(`Data-quinta`,`Dólar-quinta`,`DI-quinta`,`Embi br quinta`,vix,dxy)
+colnames(dados.s.c.q) <- c('Data','Dolar','DI','EMBI','VIX','DXY')
+
+dados.s.c <- rbind.data.frame(dados.s.c.q,dados.s.c.t)
+dados.s.c <- dados.s.c[order(dados.s.c$Data),]
+```
+
+
+Selecionandos os dados
+
+
+```{r}
+
+dados.c.c.t <- dados.com.copom.t %>% 
+  select(`Data-terca`,`Dólar-terca`,`DI-terca`,`embi-terca`,vix,dxy)
+colnames(dados.c.c.t) <- c('Data','Dolar','DI','EMBI','VIX','DXY')
+
+
+dados.c.c.q <- dados.com.copom.q %>% 
+  select(`Data-quinta`,`Dólar-quinta`,`DI-quinta`,`embi- quinta`,vix,dxy)
+colnames(dados.c.c.q) <- c('Data','Dolar','DI','EMBI','VIX','DXY')
+
+
+dados.c.c <- rbind.data.frame(dados.c.c.q,dados.c.c.t)
+dados.c.c <- dados.c.c[order(dados.c.c$Data),]
+
+
+
+dados <- rbind.data.frame(dados.c.c,dados.s.c)
+dados <- dados[order(dados$Data),]
+```
+
+
+
+
+## Gráficos das séries históricas
+
+Grafico dolar x real
+
+```{r}
+ggplot(dados,aes(x=Data,y=Dolar))+
+  geom_line(color='darkblue')+
+  labs(y='USD / R$',x= '')+
+  theme_light()
+
+```
+
+Gráfico DI
+
+```{r}
+ggplot(dados,aes(x=Data,y=DI))+
+  geom_line(color='darkred')+
+  labs(y='DI (%)',x='')+
+  theme_light()
+
+```
+
+Gráfico EMBI
+
+
+```{r}
+
+ggplot(dados,aes(x=Data,y=EMBI))+
+  geom_line(color='black')+
+  labs(y='Embi Br',x= '')+
+  theme_light()
+
+```
+
+Gráfico VIX
+
+```{r}
+
+
+ggplot(dados,aes(x=Data,y=VIX))+
+  geom_line(color='black')+
+  labs(x= '')+
+  theme_light()
+
+```
+
+Gráfico DXY
+
+```{r}
+ggplot(dados,aes(x=Data,y=DXY))+
+  geom_line(color='black')+
+  labs(x= '')+
+  theme_light()
+```
+
+
+
+
+## Gráficos das variações 
+
+```{r}
+dolar.s.t <- dados.sem.copom.t$`Dólar-terca`
+dolar.s.q <- dados.sem.copom.q$`Dólar-quinta`
+data.s <- dados.sem.copom.t$`Data- terça`
+dolar.c.t <- dados.com.copom.t$`Dólar-terca`
+dolar.c.q <- dados.com.copom.q$`Dólar-quinta`
+data.c <- dados.com.copom.t$`Data-terca`
+
+dolar.s <- log(dolar.s.q)-log(dolar.s.t)
+dolar.c <- log(dolar.c.q)-log(dolar.c.t)
+
+df.dol.s <- data.frame(data.s,dolar.s)
+colnames(df.dol.s) <- c("data","dolar")
+```
+
+
+
+
+#### DI
+
+Selecionando e organizando os dados
+
+```{r}
+di.s.t <- dados.sem.copom.t$`DI-terca`
+di.s.q <- dados.sem.copom.q$`DI-quinta`
+
+
+di.c.t <- dados.com.copom.t$`DI-terca`
+di.c.q <- dados.com.copom.q$`DI-quinta`
+
+di.s <- log(1+di.s.q)-log(1+di.s.t)
+di.c <- log(1+di.c.q)-log(1+di.c.t)
+
+
+
+df.dados.s <- data.frame(data.s,di.s,dolar.s)
+
+colnames(df.dados.s) <- c('Ano','DI','DOLAR')
+
+df.dados.c <- data.frame(data.c,di.c,dolar.c)
+colnames(df.dados.c) <- c('Ano','DI','DOLAR')
+
+```
+
+
+
+
+
+Regressão para dias sem copom
+
+```{r}
+dds <- lm(dolar.s~di.s)
+
+```
+
+
+
+
+GGPLOT  VARIAÇÕES SEM COPOM
+
+```{r}
+
+p2.1 <- ggplot(data= df.dados.s)+
+  geom_point(aes(x =DI, y =DOLAR,color=Ano))+
+  labs(x="Variação nos Juros",y= "Variação no Câmbio")+
+  geom_abline(intercept =0, slope = dds$coefficients[2],color='red')+
+  # geom_abline(intercept =0, slope = ddc$coefficients[2],color='red')+
+  theme_light()
+
+p2.1 +coord_cartesian(xlim = c(-0.1, 0.1),ylim = c(-0.06,0.06))
+
+```
+
+
+Regressão para dias sem copom
+
+
+```{r}
+ddc <- lm(dolar.c~di.c)
+
+```
+
+
+VARIAÇÕES COM COPOM
+
+```{r}
+p2.2 <- ggplot(data= df.dados.c)+
+  geom_point(aes(x =DI, y =DOLAR,color=Ano))+
+  labs(x="Variação nos Juros",y= "Variação no Câmbio")+
+  geom_abline(intercept =0, slope = ddc$coefficients[2],color='red')+
+  theme_light()
+
+
+p2.2 +coord_cartesian(xlim = c(-0.1, 0.1),ylim = c(-0.06,0.06))
+
+```
+
+
+
+
+Unindo as variações dos dias com e sem copom. E ordenando os dados.
+
+```{r}
+df.dados.f <- rbind.data.frame(df.dados.c,df.dados.s)
+df.dados.f <- df.dados.f[order(df.dados.f$Ano,decreasing = FALSE),]
+
+```
+
+VARIAÇÕES EM TODAS AS DATAS
+
+```{r}
+p2.3 <- ggplot(data= df.dados.f)+
+  geom_point(aes(x =DI, y =DOLAR,color=Ano))+
+  labs(x="Variação nos Juros",y= "Variação no Câmbio")+
+  geom_abline(intercept =0, slope = dds$coefficients[2],color='red')+
+  geom_abline(intercept =0, slope = ddc$coefficients[2],color='red')+
+  theme_light()
+
+
+p2.3 +coord_cartesian(xlim = c(-0.1, 0.1),ylim = c(-0.06,0.06))
+```
+
+
+
+
+
+
+# TESTE F
+
+```{r}
+ddi.c <- di.c #difernça DI em encontros do copom
+
+ddi.s <- di.s
+```
+
+
+
+TESTE F para a amostra do DI
+
+```{r}
+var.test(ddi.c,ddi.s)
+```
+
+
+
+
+
+As variáveis que iremos utilizar são: var.cambio.com.copom.d e var.cambio.sem.copom.d
+
+
+```{r}
+ddol.c <- dolar.c
+ddol.s <- dolar.s
+
+```
+
+
+
+TESTE F para a amostra do Câmbio
+
+```{r}
+var.test(ddol.c,ddol.s)
+```
